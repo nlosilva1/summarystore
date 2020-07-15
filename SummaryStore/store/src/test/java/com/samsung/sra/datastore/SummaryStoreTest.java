@@ -15,9 +15,7 @@
 */
 package com.samsung.sra.datastore;
 
-import com.samsung.sra.datastore.aggregates.CMSOperator;
-import com.samsung.sra.datastore.aggregates.MaxOperator;
-import com.samsung.sra.datastore.aggregates.SimpleCountOperator;
+import com.samsung.sra.datastore.aggregates.*;
 import com.samsung.sra.datastore.ingest.CountBasedWBMH;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.Test;
@@ -46,12 +44,17 @@ public class SummaryStoreTest {
 
         // create and populate store
         SummaryStore store = new SummaryStore(storeLoc, new SummaryStore.StoreOptions().setKeepReadIndexes(withReadIndex));
-        Windowing windowing = new GenericWindowing(new ExponentialWindowLengths(2));
+        //Windowing windowing = new GenericWindowing(new ExponentialWindowLengths(2));
+
+        Windowing windowing = new RationalPowerWindowing(1, 1, 1, 1);
+
         CountBasedWBMH wbmh = new CountBasedWBMH(windowing).setBufferSize(62);
         store.registerStream(streamID, wbmh,
                 new SimpleCountOperator(),
-                new CMSOperator(5, 100, 0),
-                new MaxOperator());
+                //new CMSOperator(5, 100, 0),
+                new MaxOperator(),
+                new MinOperator(),
+                new SumOperator());
         for (long i = 0; i < 1022; ++i) {
             if (i == 491) {
                 store.startLandmark(streamID, i);

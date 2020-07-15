@@ -25,4 +25,5 @@ enum OpType {
     CMS = 4;
     MAX = 5;
     FREQ = 6;
+    MIN = 7;
 }
