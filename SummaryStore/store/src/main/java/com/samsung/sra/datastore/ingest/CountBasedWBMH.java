@@ -202,9 +202,9 @@ public class CountBasedWBMH implements Serializable {
 
     private void flush(boolean shutdown, boolean setUnbuffered) throws BackingStoreException {
         long threshold = flushBarrier.getNextFlushThreshold();
-        System.out.println(new Date() + " ingester flush start");
+        logger.info("ingester flush start");
         ingester.flush(shutdown);
-        System.out.println(new Date() + " ingester flush end");
+        logger.info("ingester flush end");
         flushBarrier.wait(FlushBarrier.SUMMARIZER, threshold);
         if (bufferSize > 0) {
             IngestBuffer partialBuffer = partialBuffers.poll();

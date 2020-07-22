@@ -61,9 +61,7 @@ class Writer implements Runnable, Serializable {
                     flushBarrier.notify(CountBasedWBMH.FlushBarrier.WRITER);
                     continue;
                 }
-                logger.info("writer start to put SummaryWindow with size:" + (window.ce-window.cs+1));
                 windowManager.putSummaryWindow(window);
-                logger.info("writer put SummaryWindow end");
                 Utilities.put(newWindowNotifications, new Merger.WindowInfo(window.ts, window.ce - window.cs + 1));
             }
         } catch (BackingStoreException e) {

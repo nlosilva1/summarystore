@@ -56,7 +56,7 @@ public class SummaryStoreTest {
             if (i == 491) {
                 store.startLandmark(streamID, i);
             }
-            store.append(streamID, i+1000, i % 10);
+            store.append(streamID, i, i % 10);
             if (i == 500) {
                 store.endLandmark(streamID, i);
             }
