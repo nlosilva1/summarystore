@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -201,7 +202,9 @@ public class CountBasedWBMH implements Serializable {
 
     private void flush(boolean shutdown, boolean setUnbuffered) throws BackingStoreException {
         long threshold = flushBarrier.getNextFlushThreshold();
+        System.out.println(new Date() + " ingester flush start");
         ingester.flush(shutdown);
+        System.out.println(new Date() + " ingester flush end");
         flushBarrier.wait(FlushBarrier.SUMMARIZER, threshold);
         if (bufferSize > 0) {
             IngestBuffer partialBuffer = partialBuffers.poll();

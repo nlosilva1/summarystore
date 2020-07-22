@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 
 /** Summarize values in full IngestBuffers into a sequence of SummaryWindows, and pass them on to Writer's queue */
@@ -81,6 +82,7 @@ class Summarizer implements Runnable, Serializable {
                 for (int c = bs; c <= be; ++c) {
                     windowManager.insertIntoSummaryWindow(window, buffer.getTimestamp(c), buffer.getValue(c));
                 }
+                System.out.println(new Date() + " Summarize a window,its size is "+(be-bs+1));
                 Utilities.put(writerQueue, window);
                 bs = be + 1;
             }

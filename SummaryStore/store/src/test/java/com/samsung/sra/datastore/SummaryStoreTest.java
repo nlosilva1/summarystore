@@ -15,7 +15,9 @@
 */
 package com.samsung.sra.datastore;
 
-import com.samsung.sra.datastore.aggregates.*;
+import com.samsung.sra.datastore.aggregates.CMSOperator;
+import com.samsung.sra.datastore.aggregates.MaxOperator;
+import com.samsung.sra.datastore.aggregates.SimpleCountOperator;
 import com.samsung.sra.datastore.ingest.CountBasedWBMH;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.Test;
@@ -40,31 +42,31 @@ public class SummaryStoreTest {
 
     private void exponentialTest(boolean withReadIndex) throws Exception {
         String storeLoc = "/tmp/tdstore";
-        Runtime.getRuntime().exec(new String[]{"sh", "-c", "rm -rf " + storeLoc}).waitFor();
+        //Runtime.getRuntime().exec(new String[]{"sh", "-c", "rm -rf " + storeLoc}).waitFor();
 
         // create and populate store
         SummaryStore store = new SummaryStore(storeLoc, new SummaryStore.StoreOptions().setKeepReadIndexes(withReadIndex));
-        //Windowing windowing = new GenericWindowing(new ExponentialWindowLengths(2));
-
-        Windowing windowing = new RationalPowerWindowing(1, 1, 1, 1);
-
+        Windowing windowing = new GenericWindowing(new ExponentialWindowLengths(2));
         CountBasedWBMH wbmh = new CountBasedWBMH(windowing).setBufferSize(62);
         store.registerStream(streamID, wbmh,
                 new SimpleCountOperator(),
-                //new CMSOperator(5, 100, 0),
-                new MaxOperator(),
-                new MinOperator(),
-                new SumOperator());
+                new CMSOperator(5, 100, 0),
+                new MaxOperator());
+        store.registerStream(2, wbmh,
+                new SimpleCountOperator(),
+                new CMSOperator(5, 100, 0),
+                new MaxOperator());
         for (long i = 0; i < 1022; ++i) {
             if (i == 491) {
                 store.startLandmark(streamID, i);
             }
-            store.append(streamID, i, i % 10);
+            store.append(streamID, i+1000, i % 10);
+            store.append(2, i+1000, i % 10);
             if (i == 500) {
                 store.endLandmark(streamID, i);
             }
         }
-        store.flush(streamID);
+        //store.flush(streamID);
         wbmh.setBufferSize(0);
 
         assertStateIsCorrect(store);

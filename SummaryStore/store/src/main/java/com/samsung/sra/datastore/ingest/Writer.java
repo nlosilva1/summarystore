@@ -21,10 +21,14 @@ import com.samsung.sra.datastore.SummaryWindow;
 import com.samsung.sra.datastore.Utilities;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.concurrent.BlockingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Write SummaryWindows to backing store and notify merger */
 class Writer implements Runnable, Serializable {
+    private static final Logger logger = LoggerFactory.getLogger(Writer.class);
     static final SummaryWindow SHUTDOWN_SENTINEL = new SummaryWindow();
     static final SummaryWindow FLUSH_SENTINEL = new SummaryWindow();
 
@@ -57,7 +61,9 @@ class Writer implements Runnable, Serializable {
                     flushBarrier.notify(CountBasedWBMH.FlushBarrier.WRITER);
                     continue;
                 }
+                logger.info("writer start to put SummaryWindow with size:",(window.ce-window.cs+1));
                 windowManager.putSummaryWindow(window);
+                logger.info("writer put SummaryWindow end");
                 Utilities.put(newWindowNotifications, new Merger.WindowInfo(window.ts, window.ce - window.cs + 1));
             }
         } catch (BackingStoreException e) {

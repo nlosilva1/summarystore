@@ -29,6 +29,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.Date;
 
 public class RocksDBBackingStore extends BackingStore {
     private static final Logger logger = LoggerFactory.getLogger(RocksDBBackingStore.class);
@@ -171,7 +172,10 @@ public class RocksDBBackingStore extends BackingStore {
         try {
             byte[] key = getRocksDBKey(streamID, swid);
             byte[] value = serDe.serializeSummaryWindow(window);
+            logger.info("insertSummaryWindow with size {}",
+                    String.format("%d", value.length));
             rocksDB.put(rocksDBWriteOptions, key, value);
+            logger.info("insertSummaryWindow End");
         } catch (RocksDBException e) {
             throw new BackingStoreException(e);
         }
@@ -276,11 +280,13 @@ public class RocksDBBackingStore extends BackingStore {
                 SummaryWindow window = entry.getValue();
                 byte[] rocksKey = getRocksDBKey(streamID, swid);
                 byte[] rocksValue = serDe.serializeSummaryWindow(window);
+                logger.info("insertrocksValue with size " + rocksValue.length);
                 try {
                     rocksDB.put(rocksKey, rocksValue);
                 } catch (RocksDBException e) {
                     throw new BackingStoreException(e);
                 }
+                logger.info("Finish insertrocksValue");
             }
         }
     }
