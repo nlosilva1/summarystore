@@ -175,7 +175,6 @@ public class RocksDBBackingStore extends BackingStore {
             logger.info("insertSummaryWindow with size {}",
                     String.format("%d", value.length));
             rocksDB.put(rocksDBWriteOptions, key, value);
-            logger.info("insertSummaryWindow End");
         } catch (RocksDBException e) {
             throw new BackingStoreException(e);
         }

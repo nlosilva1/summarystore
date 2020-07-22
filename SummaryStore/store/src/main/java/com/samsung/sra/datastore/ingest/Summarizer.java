@@ -82,7 +82,6 @@ class Summarizer implements Runnable, Serializable {
                 for (int c = bs; c <= be; ++c) {
                     windowManager.insertIntoSummaryWindow(window, buffer.getTimestamp(c), buffer.getValue(c));
                 }
-                System.out.println(new Date() + " Summarize a window,its size is "+(be-bs+1));
                 Utilities.put(writerQueue, window);
                 bs = be + 1;
             }

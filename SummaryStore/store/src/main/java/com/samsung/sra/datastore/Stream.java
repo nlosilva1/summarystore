@@ -113,10 +113,14 @@ class Stream implements Serializable {
         synchronized (loadingMonitor) {
             if (!loaded) return;
             if (wbmh == null) return; // in readonly mode, unload should do nothing
+            logger.info("Start unload windowManager");
             serializeToFile(directory + "/read-index." + streamID, windowManager);
+            logger.info("Finish unload windowManager, start unload wbmh");
             serializeToFile(directory + "/write-index." + streamID, wbmh);
             wbmh.close();
+            logger.info("Finish WBMH close, start to flush windowmanager to DISK");
             windowManager.flushToDisk();
+            logger.info("Finish flush windowmanager to DISK");
             windowManager = null;
             wbmh = null;
             loaded = false;
