@@ -158,6 +158,8 @@ public class RocksDBBackingStore extends BackingStore {
     @Override
     void deleteSummaryWindow(long streamID, long swid, SerDe serDe) throws BackingStoreException {
         assert cache == null;
+        logger.info("deleteSummaryWindow with streamID {}",
+                String.format("%d", streamID));
         try {
             byte[] key = getRocksDBKey(streamID, swid);
             rocksDB.delete(key);
@@ -172,7 +174,7 @@ public class RocksDBBackingStore extends BackingStore {
         try {
             byte[] key = getRocksDBKey(streamID, swid);
             byte[] value = serDe.serializeSummaryWindow(window);
-            logger.info("insertSummaryWindow with size {}",
+            logger.info("Add {} insertSummaryWindow",
                     String.format("%d", value.length));
             rocksDB.put(rocksDBWriteOptions, key, value);
         } catch (RocksDBException e) {
@@ -279,13 +281,13 @@ public class RocksDBBackingStore extends BackingStore {
                 SummaryWindow window = entry.getValue();
                 byte[] rocksKey = getRocksDBKey(streamID, swid);
                 byte[] rocksValue = serDe.serializeSummaryWindow(window);
-                logger.info("insertrocksValue with size " + rocksValue.length);
+                logger.info("Add {} insertrocksValue",
+                        String.format("%d", rocksValue.length));
                 try {
                     rocksDB.put(rocksKey, rocksValue);
                 } catch (RocksDBException e) {
                     throw new BackingStoreException(e);
                 }
-                logger.info("Finish insertrocksValue");
             }
         }
     }
@@ -310,6 +312,8 @@ public class RocksDBBackingStore extends BackingStore {
         for (Map.Entry<Long, LandmarkWindow> windowEntry: streamMap.entrySet()) {
             long lwid = windowEntry.getKey();
             LandmarkWindow window = windowEntry.getValue();
+            logger.info("Add {} flushLandmarksToDisk",
+                    String.format("%d", serDe.serializeLandmarkWindow(window).length));
             try {
                 rocksDB.put(getLandmarkRocksKey(streamID, lwid), serDe.serializeLandmarkWindow(window));
             } catch (RocksDBException e) {
@@ -363,6 +367,8 @@ public class RocksDBBackingStore extends BackingStore {
 
     @Override
     public void putAux(String key, byte[] value) throws BackingStoreException {
+        logger.info("Add {} putAux",
+                String.format("%d", value.length));
         try {
             rocksDB.put(getAuxRocksKey(key), value);
         } catch (RocksDBException e) {
