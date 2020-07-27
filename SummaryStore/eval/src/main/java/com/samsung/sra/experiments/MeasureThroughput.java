@@ -113,9 +113,9 @@ public class MeasureThroughput {
                         minTime = batchTime;
                     }
                     avgTime += batchTime / (double)100000000;
-                    if(t % 100000000 == 0) {
+                    if((t + 1) % 100000000 == 0) {
                         logger.info("Batch {}: BatchMax= {} ns, BatchMin= {} ns, BatchAvg = {} ns",
-                                t / 100000000, maxTime, minTime, avgTime);
+                                (t + 1) / 100000000, maxTime, minTime, avgTime);
                         maxTime = 0;
                         minTime = 9223372036854775806L;
                         avgTime = 0;
