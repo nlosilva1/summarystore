@@ -17,17 +17,16 @@ package com.samsung.sra.experiments;
 
 import com.samsung.sra.datastore.RationalPowerWindowing;
 import com.samsung.sra.datastore.SummaryStore;
-import com.samsung.sra.datastore.aggregates.CMSOperator;
-import com.samsung.sra.datastore.aggregates.SimpleCountOperator;
+import com.samsung.sra.datastore.aggregates.*;
 import com.samsung.sra.datastore.ingest.CountBasedWBMH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Random;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class MeasureThroughput {
-    private static final String directory = "/mnt/md0/tdstore_throughput";
+    private static final String directory = "/data/tdstore_throughput";
     private static final Logger logger = LoggerFactory.getLogger(MeasureThroughput.class);
 
     public static void main(String[] args) throws Exception {
@@ -46,7 +45,7 @@ public class MeasureThroughput {
             StreamWriter[] writers = new StreamWriter[nThreads];
             Thread[] writerThreads = new Thread[nThreads];
             for (int i = 0; i < nThreads; ++i) {
-                writers[i] = new StreamWriter(store, parallelismSem, i, T);
+                writers[i] = new MeasureThroughput().new StreamWriter(store, parallelismSem, i, T, i+Long.parseLong(args[2]));
                 writerThreads[i] = new Thread(writers[i], i + "-appender");
             }
             long w0 = System.currentTimeMillis();
@@ -68,18 +67,18 @@ public class MeasureThroughput {
         }
     }
 
-    private static class StreamWriter implements Runnable {
+    private class StreamWriter implements Runnable {
         private final long streamID, N;
         private final SummaryStore store;
         private final Semaphore semaphore;
-        private final ThreadLocalRandom random;
+        private final Random random;
 
-        private StreamWriter(SummaryStore store, Semaphore semaphore, long streamID, long N) throws Exception {
+        private StreamWriter(SummaryStore store, Semaphore semaphore, long streamID, long N, long random) throws Exception {
             this.store = store;
             this.semaphore = semaphore;
             this.streamID = streamID;
             this.N = N;
-            this.random = ThreadLocalRandom.current();
+            this.random = new Random(random);
         }
 
         @Override
@@ -92,13 +91,38 @@ public class MeasureThroughput {
                     .setParallelizeMerge(10);
             try {
                 store.registerStream(streamID, false, wbmh,
-                        new SimpleCountOperator(), new CMSOperator(5, 1000, 0));
+                        new SimpleCountOperator(),
+                        new CMSOperator(5, 1000, 0),
+                        new BloomFilterOperator(5, 1000),
+                        new SumOperator(),
+                        new MaxOperator(),
+                        new MinOperator());
+                long maxTime = 0;
+                long minTime = 9223372036854775806L;
+                double avgTime = 0;
                 for (long t = 0; t < N; ++t) {
-                    long v = random.nextLong(100);
+                    long v = random.nextLong();
+                    long st = System.nanoTime();
                     store.append(streamID, t, v);
+                    long en = System.nanoTime();
+                    long batchTime = en - st;
+                    if (maxTime < batchTime) {
+                        maxTime = batchTime;
+                    }
+                    if (minTime > batchTime) {
+                        minTime = batchTime;
+                    }
+                    avgTime += batchTime / (double)100000000;
+                    if(t % 100000000 == 0) {
+                        logger.info("Batch {}: BatchMax= {} ns, BatchMin= {} ns, BatchAvg = {} ns",
+                                t / 100000000, maxTime, minTime, avgTime);
+                        maxTime = 0;
+                        minTime = 9223372036854775806L;
+                        avgTime = 0;
+                    }
                 }
-                /*store.flush(streamID);
-                wbmh.setBufferSize(0);*/
+                store.flush(streamID);
+                wbmh.setBufferSize(0);
                 wbmh.flushAndSetUnbuffered();
                 logger.info("Populated stream {}", streamID);
                 if (semaphore != null) {
