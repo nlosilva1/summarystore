@@ -36,8 +36,8 @@ public class MeasureThroughput {
         }
         long T = Long.parseLong(args[0].replace("_", ""));
         int nThreads = Integer.parseInt(args[1]);
-        Semaphore parallelismSem = args.length > 2
-                ? new Semaphore(Integer.parseInt(args[2]))
+        Semaphore parallelismSem = args.length > 3
+                ? new Semaphore(Integer.parseInt(args[3]))
                 : null;
         Runtime.getRuntime().exec(new String[]{"sh", "-c", "rm -rf " + directory}).waitFor();
 
